@@ -1,4 +1,5 @@
 #include "kalman_filter.h"
+#include <iostream>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -46,20 +47,32 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   // measurement residual using h(x_)
 	VectorXd z_pred = VectorXd(3);
   z_pred(0) = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
-  z_pred(1) = atan2(x_(1), x_(0));
-  z_pred(2) = (x_(0)*x_(2) + x_(1)*x_(3)) / z_pred(0);
-	VectorXd y = z - z_pred;
+  if ( abs(z_pred(0)) >= 0.00000001 )
+  {
+    z_pred(1) = atan2(x_(1), x_(0));
+    z_pred(2) = (x_(0)*x_(2) + x_(1)*x_(3)) / z_pred(0);
+	  VectorXd y = z - z_pred;
 
-  // Kalman gain
-	MatrixXd Ht = H_.transpose();
-	MatrixXd S = H_ * P_ * Ht + R_;
-	MatrixXd Si = S.inverse();
-	MatrixXd PHt = P_ * Ht;
-	MatrixXd K = PHt * Si;
+    // normalize measured angle
+    static const double PI = 3.14159265359;
+    while ( y(1) >  PI ) y(1) -= PI;
+    while ( y(1) < -PI ) y(1) += PI;
 
-	//new estimate
-	x_ = x_ + (K * y);
-	long x_size = x_.size();
-	MatrixXd I = MatrixXd::Identity(x_size, x_size);
-	P_ = (I - K * H_) * P_;
+    // Kalman gain
+	  MatrixXd Ht = H_.transpose();
+	  MatrixXd S = H_ * P_ * Ht + R_;
+	  MatrixXd Si = S.inverse();
+	  MatrixXd PHt = P_ * Ht;
+	  MatrixXd K = PHt * Si;
+
+	  //new estimate
+	  x_ = x_ + (K * y);
+	  long x_size = x_.size();
+	  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+	  P_ = (I - K * H_) * P_;
+  }
+  else
+  {
+    std::cout << "Skipping EKF update step because position norm is close to singular!\n";
+  }
 }

@@ -22,6 +22,8 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
       {
         unsigned dim = estimations[0].size();
         rmse = VectorXd(dim);
+
+        // sum the error squares
         for ( unsigned d=0; d<dim; d++ )
         {
           rmse(d) = 0;
@@ -39,6 +41,12 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
             std::cout << "ERROR: Tools::CalculateRMSE called with estimation and/or ground_truth of unexpected dimension!\n";
           }
         }
+        
+        //calculate the mean
+	      rmse = rmse/dim;
+
+	      //calculate the squared root
+	      rmse = rmse.array().sqrt();
       }
       else
       {
@@ -67,9 +75,18 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
          sp     = x_state(2)*x_state(1) - x_state(3)*x_state(0);
   MatrixXd jacobian;
   jacobian = MatrixXd(3,4);
-  jacobian << x_state(0) / p2_1o2,       x_state(1) / p2_1o2,      0,                   0,
-             -x_state(1) / p2,           x_state(0) / p2,          0,                   0,
-              x_state(1) * sp / p2_3o2, -x_state(0) * sp / p2_3o2, x_state(0) / p2_1o2, x_state(1) / p2_1o2;
-
+  if ( abs(p2) >= 0.00000001 )
+  {
+    jacobian << x_state(0) / p2_1o2,       x_state(1) / p2_1o2,      0,                   0,
+               -x_state(1) / p2,           x_state(0) / p2,          0,                   0,
+                x_state(1) * sp / p2_3o2, -x_state(0) * sp / p2_3o2, x_state(0) / p2_1o2, x_state(1) / p2_1o2;
+  }
+  else
+  {
+    std::cout << "Can't calculate Jacobian because position norm is close to singular!\n";
+    jacobian << 0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0;
+  }
   return jacobian;
 }

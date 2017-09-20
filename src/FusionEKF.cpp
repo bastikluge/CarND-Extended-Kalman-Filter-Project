@@ -107,8 +107,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       double sin_phi = sin(measurement_pack.raw_measurements_[1]);
       ekf_.x_(0) = measurement_pack.raw_measurements_[0] * cos_phi;
       ekf_.x_(1) = measurement_pack.raw_measurements_[0] * sin_phi;
-      ekf_.x_(2) = measurement_pack.raw_measurements_[2] * cos_phi;
-      ekf_.x_(3) = measurement_pack.raw_measurements_[2] * sin_phi;
+      ekf_.x_(2) = 0; //measurement_pack.raw_measurements_[2] * cos_phi;
+      ekf_.x_(3) = 0; //measurement_pack.raw_measurements_[2] * sin_phi;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       cout << "EKF: first measurement LASER" << endl;
